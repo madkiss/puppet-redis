@@ -47,6 +47,7 @@ class redis::sentinel (
   $service_restart          = true,
   $manage_upstart_scripts   = true,
   $package_name             = undef,
+  $package_ensure           = 'present',
 ) {
 
   include redis::sentinel_params
@@ -74,10 +75,7 @@ class redis::sentinel (
     $conf_logfile_real = $::redis::sentinel_params::logfile
   }
 
-  package { 'redis':
-    ensure => $package_ensure,
-    name   => $package,
-  }
+  ensure_resource('package', $package, {'ensure' => $package_ensure, 'name' => $package })
 
   if $manage_upstart_scripts == true {
     service { 'sentinel':
@@ -96,7 +94,7 @@ class redis::sentinel (
       enable     => $service_enable,
       hasrestart => true,
       hasstatus  => true,
-      require    => [ Package['redis'],
+      require    => [ Package[$package],
                       File[$conf_sentinel_orig] ],
     }
   }
@@ -110,14 +108,14 @@ class redis::sentinel (
     owner   => redis,
     group   => redis,
     mode    => '0644',
-    require => Package['redis'],
+    require => Package[$package],
     notify  => Exec["cp ${conf_sentinel_orig} ${conf_sentinel}"],
   }
 
   file { $conf_sentinel:
     owner   => redis,
     group   => redis,
-    require => Package['redis'],
+    require => Package[$package],
   }
 
   exec { "cp ${conf_sentinel_orig} ${conf_sentinel}":

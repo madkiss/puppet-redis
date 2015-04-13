@@ -142,10 +142,7 @@ class redis (
     $conf_logfile_real = $::redis::params::logfile
   }
 
-  package { 'redis':
-    ensure => $package_ensure,
-    name   => $package,
-  }
+  ensure_resource('package', $package, {'ensure' => $package_ensure, 'name' => $package })
 
   service { 'redis':
     ensure     => $service_ensure,
@@ -153,7 +150,7 @@ class redis (
     enable     => $service_enable,
     hasrestart => true,
     hasstatus  => true,
-    require    => [ Package['redis'],
+    require    => [ Package[$package],
                     Exec[$conf_dir],
                     File[$conf_redis] ],
   }
@@ -164,7 +161,7 @@ class redis (
     owner   => root,
     group   => root,
     mode    => '0644',
-    require => Package['redis'],
+    require => Package[$package],
   }
 
   file { $conf_logrotate:
@@ -182,7 +179,7 @@ class redis (
     group   => root,
     creates => $conf_dir,
     before  => Service['redis'],
-    require => Package['redis'],
+    require => Package[$package],
   }
 
   file { $conf_dir:
